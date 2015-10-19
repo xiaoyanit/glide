@@ -1,14 +1,16 @@
 package com.bumptech.glide.request.target;
 
+import com.bumptech.glide.util.Util;
+
 /**
- * A simple {@link com.bumptech.glide.request.target.Target} base class with default (usually noop) implementations
- * of non essential methods that allows the caller to specify an exact width/height. Typicaly use cases look something
- * like this:
+ * A simple {@link com.bumptech.glide.request.target.Target} base class with default (usually noop)
+ * implementations of non essential methods that allows the caller to specify an exact width/height.
+ * Typicaly use cases look something like this:
  * <pre>
  * <code>
  * Glide.load("http://somefakeurl.com/fakeImage.jpeg")
  *      .asBitmap()
- *      .fitCenter()
+ *      .withFitCenter()
  *      .into(new SimpleTarget<Bitmap>(250, 250) {
  *
  *          {@literal @Override}
@@ -24,48 +26,42 @@ package com.bumptech.glide.request.target;
  * @param <Z> The type of resource that this target will receive.
  */
 public abstract class SimpleTarget<Z> extends BaseTarget<Z> {
-    /** A constant indicating an invalid pixel size. */
-    protected static final int INVALID_SIZE = -1;
+  private final int width;
+  private final int height;
 
-    private final int width;
-    private final int height;
+  /**
+   * Constructor for the target that uses {@link Target#SIZE_ORIGINAL} as the target width and
+   * height.
+   */
+  public SimpleTarget() {
+    this(SIZE_ORIGINAL, SIZE_ORIGINAL);
+  }
 
-    /**
-     * Constructor for the target that assumes you will have called
-     * {@link com.bumptech.glide.GenericRequestBuilder#override(int, int)} on the request builder this target is given
-     * to.
-     *
-     * <p>
-     *     Requests that load into this target will throw an {@link java.lang.IllegalArgumentException} if
-     *     {@link com.bumptech.glide.GenericRequestBuilder#override(int, int)} was not called on the request builder.
-     * </p>
-     */
-    public SimpleTarget() {
-        this(INVALID_SIZE, INVALID_SIZE);
+  /**
+   * Constructor for the target that takes the desired dimensions of the decoded and/or transformed
+   * resource.
+   *
+   * @param width  The width in pixels of the desired resource.
+   * @param height The height in pixels of the desired resource.
+   */
+  public SimpleTarget(int width, int height) {
+    this.width = width;
+    this.height = height;
+  }
+
+  /**
+   * Immediately calls the given callback with the sizes given in the constructor.
+   *
+   * @param cb {@inheritDoc}
+   */
+  @Override
+  public final void getSize(SizeReadyCallback cb) {
+    if (!Util.isValidDimensions(width, height)) {
+      throw new IllegalArgumentException(
+          "Width and height must both be > 0 or Target#SIZE_ORIGINAL, but given" + " width: "
+              + width + " and height: " + height + ", either provide dimensions in the constructor"
+              + " or call override()");
     }
-
-    /**
-     * Constructor for the target that takes the desired dimensions of the decoded and/or transformed resource.
-     *
-     * @param width The width in pixels of the desired resource.
-     * @param height The height in pixels of the desired resource.
-     */
-    public SimpleTarget(int width, int height) {
-        this.width = width;
-        this.height = height;
-    }
-
-    /**
-     * Immediately calls the given callback with the sizes given in the constructor.
-     *
-     * @param cb {@inheritDoc}
-     */
-    @Override
-    public final void getSize(SizeReadyCallback cb) {
-        if (width <= 0 || height <= 0) {
-            throw new IllegalArgumentException("Width and height must both be > 0, but given width: " + width + " and"
-                    + " height: " + height + ", either provide dimensions in the constructor or call override()");
-        }
-        cb.onSizeReady(width, height);
-    }
+    cb.onSizeReady(width, height);
+  }
 }
